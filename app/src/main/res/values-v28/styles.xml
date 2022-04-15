@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="postScreenContent">
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">14dp</item>
+        <item name="android:lineHeight">20dp</item>
+    </style>
+</resources>
