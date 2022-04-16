@@ -6,7 +6,7 @@ import edu.neu.madcourse.musicloud.Post;
 import edu.neu.madcourse.musicloud.Song;
 import edu.neu.madcourse.musicloud.User;
 
-public class Comment {
+public class Comment implements Comparable<Comment> {
     protected User user;
     protected String content;
     protected  Date date;
@@ -26,6 +26,10 @@ public class Comment {
         this.content = content;
         this.date = date;
         this.likeCnt = likeCnt;
+    }
+
+    public Comment() {
+
     }
 
     public User getUser() {
@@ -58,5 +62,10 @@ public class Comment {
 
     public void setLikeCnt(int likeCnt) {
         this.likeCnt = likeCnt;
+    }
+
+    @Override
+    public int compareTo(Comment comment) {
+        return getDate().compareTo(comment.getDate());
     }
 }

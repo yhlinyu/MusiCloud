@@ -8,10 +8,12 @@ public class User implements Parcelable {
     protected String password;
     protected String profileImage;
 
+    private static String ANON_USER_IMAGE_URL = "https://images.squarespace-cdn.com/content/v1/5f063bf5da451153f3fcbb49/1598918203644-TCHDL2JY2ISKCV4D9B97/image-asset.jpeg";
+
     public User(String username, String password) {
         this.username = username;
         this.password = password;
-        this.profileImage = "placeholder";
+        this.profileImage = ANON_USER_IMAGE_URL;
     }
 
     public User(String username, String password, String profileImage) {

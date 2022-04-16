@@ -1,30 +1,40 @@
 package edu.neu.madcourse.musicloud;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Rect;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.ocpsoft.prettytime.PrettyTime;
 
@@ -32,6 +42,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Scanner;
 
@@ -39,24 +50,31 @@ import javax.net.ssl.HttpsURLConnection;
 
 import edu.neu.madcourse.musicloud.comments.Comment;
 import edu.neu.madcourse.musicloud.comments.RecyclerViewAdapter;
-import edu.neu.madcourse.musicloud.spotify.SpotifyService;
 import edu.neu.madcourse.musicloud.spotify.WebServiceExecutor;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "PostActivity";
     private String token;
 
+    // Post-specific
+    private User currUser;
+    private String postId;
+
+    // Database
     private DatabaseReference dbReference;
     private DatabaseReference usersDbReference;
-    private DatabaseReference postsDbReference;
+    private DatabaseReference postDbReference;
+    private DatabaseReference commentsDbReference;
     private ValueEventListener postValueEventListener;
+    private ChildEventListener commentsChildEventListener;
 
+    // Recycler view
     private RecyclerView recyclerView;
     private RecyclerViewAdapter recyclerViewAdapter;
     private RecyclerView.LayoutManager rViewLayoutManager;
-
     private ArrayList<Comment> commentsList;
 
+    // Views
     private RelativeLayout navBarLayout;
     private ImageView navBarUserAvatar;
     private ImageView postUserImage;
@@ -73,15 +91,26 @@ public class MainActivity extends AppCompatActivity {
     private TextView postShares;
     private TextView commentSectionCnt;
     private Button playButton, pauseButton;
-
+    private TextInputLayout commentInputLayout;
+    private TextInputEditText commentInput;
     private MediaPlayer mediaPlayer;
 
+    private PrettyTime p;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        p = new PrettyTime();
+
+        // Set the post Id
+        postId = "-Mzxvh57q8aioVtBv8VZ"; // sunroof
+
+        // Set the current user
+        currUser = new User("Anon", "password");
+
+        // Initialize empty comments list and create RecyclerView
         commentsList = new ArrayList<>();
         createRecyclerView();
 
@@ -101,8 +130,11 @@ public class MainActivity extends AppCompatActivity {
         postReplies = findViewById(R.id.postReplies);
         postShares = findViewById(R.id.postShares);
         commentSectionCnt = findViewById(R.id.commentsCnt);
+
         playButton = findViewById(R.id.playButton);
         pauseButton = findViewById(R.id.pauseButton);
+        commentInputLayout = findViewById(R.id.commentsInputLayout);
+        commentInput = findViewById(R.id.commentsInput);
 
         navBarUserAvatar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -142,7 +174,22 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Setup Media Player
+        commentInputLayout.setEndIconOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                postComment();
+
+            }
+        });
+
+        postLikes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                like();
+            }
+        });
+
+        // Set up Media Player
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioAttributes(
                 new AudioAttributes.Builder()
@@ -152,82 +199,9 @@ public class MainActivity extends AppCompatActivity {
         );
 
         // Set up database
-        dbReference = FirebaseDatabase.getInstance().getReference();
-        postsDbReference = dbReference.child("posts");
-
-        // For testing purposes
-        initTest();
-
-        WebServiceExecutor webServiceExecutor = new WebServiceExecutor();
-        webServiceExecutor.execute(new FetchTrackTask());
-
-        // For searching
-        // webServiceExecutor.execute(new SpotifyService());
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mediaPlayer.release();
-    }
-
-    /**
-     * Set up RecyclerView for comments, located at the bottom of the Topic Screen.
-     */
-    private void createRecyclerView() {
-        rViewLayoutManager = new LinearLayoutManager(this);
-        recyclerView = findViewById(R.id.commentsRecyclerView);
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(rViewLayoutManager);
-
-        recyclerViewAdapter = new RecyclerViewAdapter(commentsList);
-        recyclerView.setAdapter(recyclerViewAdapter);
-    }
-
-    /**
-     * Initialize information for testing purposes.
-     */
-    private void initTest() {
-        PrettyTime p = new PrettyTime();
-        String passwordPlaceholder = "placeholder";
-
-        // String urls for images that are not yet handled in server
-        String imageStr1 = "https://post.medicalnewstoday.com/wp-content/uploads/sites/3/2020/02/322868_1100-800x825.jpg";
-        String imageStr2 = "https://bleedingcool.com/wp-content/uploads/2021/06/Pikachu-color-model-publicity-cel-1200x628.jpg";
-        String imageStr3 = "https://cdn.myanimelist.net/images/userimages/9196770.jpg?t=1635597600";
-        String imageStr4 = "https://toppng.com/uploads/preview/kuromi-sanrio-kuromi-115631993737djkw53fsh.png";
-        String imageStr5 = "https://www.vhv.rs/dpng/d/594-5949124_cinnamoroll-sanrio-hellokitty-bunny-cute-soft-cinnamoroll-sanrio.png";
-
-        // Comment users for testing
-        User user1 = new User("Dog", passwordPlaceholder, imageStr1);
-        User user2 = new User("Pikachu", passwordPlaceholder, imageStr2);
-        User user3 = new User("Egg", passwordPlaceholder, imageStr3);
-        User user4 = new User("Kuromi", passwordPlaceholder, imageStr4);
-        User user5 = new User("Cinnamoroll", passwordPlaceholder, imageStr5);
-
-        // Date objects for testing
-        Date tenMinutesAgo = new Date(System.currentTimeMillis() - 1000*60*10);
-        Date oneDayAgo = new Date(System.currentTimeMillis() - 1000*60*60*24);
-        Date twoDaysAgo = new Date(System.currentTimeMillis() - 1000*60*60*48);
-        Date now = new Date();
-
-        // ====== INIT TEST COMMENTS (to be modified) ======
-        Comment comment1 = new Comment(user1, "Thank you for the rec!", now, 10);
-        Comment comment2 = new Comment(user2, "Wow!!", tenMinutesAgo, 5);
-        Comment comment3 = new Comment(user3, "I like this song", oneDayAgo, 1);
-        Comment comment4 = new Comment(user4, "I like your music taste!", oneDayAgo,1);
-        Comment comment5 = new Comment(user5, "Thanks for recommending!", twoDaysAgo);
-
-        commentsList.add(comment1);
-        commentsList.add(comment2);
-        commentsList.add(comment3);
-        commentsList.add(comment4);
-        commentsList.add(comment5);
-        recyclerViewAdapter.notifyDataSetChanged();
-
-        // Retrieve post information from DB using postId
-        String postId = "-Mzxvh57q8aioVtBv8VZ"; // sunroof
-        // String postId = "-N-i8pBnEqEWHjjFnV_7";
+        dbReference = FirebaseDatabase.getInstance().getReference(); // points to the root db
+        postDbReference = dbReference.child("posts").child(postId); // points to the post
+        commentsDbReference = postDbReference.child("comments"); // points to the comments of the post
 
         postValueEventListener = new ValueEventListener() {
             @Override
@@ -237,6 +211,18 @@ public class MainActivity extends AppCompatActivity {
                 postTitle.setText(snapshot.child("title").getValue(String.class));
                 postContent.setText(snapshot.child("content").getValue(String.class));
                 postLikes.setText(Integer.toString(snapshot.child("likeCnt").getValue(Integer.class)));
+
+                // Set the like (heart) icon appearance based on the current user
+                // If the user has liked this post, the icon should be red
+                // Otherwise, the icon should be black
+                if (snapshot.child("likes").hasChild(currUser.getUsername())) {
+                    Log.v("like", "liked");
+                    postLikes.getCompoundDrawables()[0].setTint(Color.RED);
+                } else {
+                    Log.v("Like", "not liked");
+                    postLikes.getCompoundDrawables()[0].setTint(Color.BLACK);
+                }
+
                 postReplies.setText(Integer.toString(snapshot.child("commentCnt").getValue(Integer.class)));
                 postShares.setText(Integer.toString(snapshot.child("shareCnt").getValue(Integer.class)));
                 commentSectionCnt.setText("(" + Integer.toString(snapshot.child("commentCnt").getValue(Integer.class)) + ")");
@@ -255,9 +241,169 @@ public class MainActivity extends AppCompatActivity {
 
             }
         };
-        postsDbReference.child(postId).addValueEventListener(postValueEventListener);
+        postDbReference.addValueEventListener(postValueEventListener);
+
+
+        commentsChildEventListener = new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                Comment newComment = snapshot.getValue(Comment.class);
+                commentsList.add(newComment);
+                Collections.sort(commentsList, Collections.reverseOrder());
+                recyclerViewAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        };
+        commentsDbReference.addChildEventListener(commentsChildEventListener);
+
+        // Fetch song
+        WebServiceExecutor webServiceExecutor = new WebServiceExecutor();
+        webServiceExecutor.execute(new FetchTrackTask());
+
+        // For searching
+        // webServiceExecutor.execute(new SpotifyService());
 
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mediaPlayer.release();
+        commentsDbReference.removeEventListener(commentsChildEventListener);
+        postDbReference.removeEventListener(postValueEventListener);
+    }
+
+    // Clear the text input field focus when user touch elsewhere
+    // Code reference: https://stackoverflow.com/questions/4828636/edittext-clear-focus-on-touch-outside
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            View v = getCurrentFocus();
+            if ( v instanceof EditText) {
+                Rect outRect = new Rect();
+                v.getGlobalVisibleRect(outRect);
+                if (!outRect.contains((int)event.getRawX(), (int)event.getRawY())) {
+                    v.clearFocus();
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                }
+            }
+        }
+        return super.dispatchTouchEvent( event );
+    }
+
+    /**
+     * Set up RecyclerView for comments, located at the bottom of the Topic Screen.
+     */
+    private void createRecyclerView() {
+        rViewLayoutManager = new LinearLayoutManager(this);
+        recyclerView = findViewById(R.id.commentsRecyclerView);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(rViewLayoutManager);
+
+        recyclerViewAdapter = new RecyclerViewAdapter(commentsList);
+        recyclerView.setAdapter(recyclerViewAdapter);
+    }
+
+    private void postComment() {
+        String content = commentInput.getText().toString();
+        Date now = new Date();
+
+        Comment comment = new Comment(currUser, content, now);
+
+        commentsDbReference.push().setValue(comment);
+
+        // Remove previous comment input
+        commentInput.setText("");
+
+        // Update comment count of this post
+        postDbReference.child("commentCnt").runTransaction(new Transaction.Handler() {
+            @NonNull
+            @Override
+            public Transaction.Result doTransaction(@NonNull MutableData currentData) {
+                int currCommentCnt = currentData.getValue(Integer.class);
+                currentData.setValue(currCommentCnt + 1);
+                return Transaction.success(currentData);
+            }
+
+            @Override
+            public void onComplete(@Nullable DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
+
+            }
+        });
+    }
+
+    private void like() {
+        // Add or remove the user from `likes` based on whether the user
+        // has liked this post before
+        postDbReference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.child("likes").hasChild(currUser.getUsername())) {
+                    // If the current user has not liked this post
+                    postDbReference.child("likes").child(currUser.getUsername()).setValue(currUser);
+                } else {
+                    // If the current user has already liked this post and want to dislike
+                    postDbReference.child("likes").child(currUser.getUsername()).removeValue();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+        // Update the like count of this post
+        // And update the appearance of the like icon
+        postDbReference.runTransaction(new Transaction.Handler() {
+            @NonNull
+            @Override
+            public Transaction.Result doTransaction(@NonNull MutableData currentData) {
+                int currLikeCnt = currentData.child("likeCnt").getValue(Integer.class);
+
+                // If the user had already liked this post
+                if (currentData.child("likes").child(currUser.getUsername()).getValue() != null) {
+                    // Set the heart icon to black
+                    postLikes.getCompoundDrawables()[0].setTint(Color.BLACK);
+                    // Decrement the like cnt
+                    currentData.child("likeCnt").setValue(currLikeCnt - 1);
+
+                } else {
+                    // Set the heart icon to red
+                    postLikes.getCompoundDrawables()[0].setTint(Color.RED);
+                    // Increment the like cnt
+                    currentData.child("likeCnt").setValue(currLikeCnt + 1);
+                }
+                return Transaction.success(currentData);
+            }
+
+            @Override
+            public void onComplete(@Nullable DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
+
+            }
+        });
+    }
+
 
     private class FetchTrackTask implements Runnable {
         private static final String client_id = "c443c313a6f64ef4a485998303b4e530";
@@ -394,6 +540,79 @@ public class MainActivity extends AppCompatActivity {
         return returnStr;
     }
 
+    /**
+     * Initialize information for testing purposes.
+     * Kept for reference.
+     */
+    private void initTest() {
+        PrettyTime p = new PrettyTime();
+        String passwordPlaceholder = "placeholder";
+
+        // String urls for images that are not yet stored in server
+        String imageStr1 = "https://post.medicalnewstoday.com/wp-content/uploads/sites/3/2020/02/322868_1100-800x825.jpg";
+        String imageStr2 = "https://bleedingcool.com/wp-content/uploads/2021/06/Pikachu-color-model-publicity-cel-1200x628.jpg";
+        String imageStr3 = "https://cdn.myanimelist.net/images/userimages/9196770.jpg?t=1635597600";
+        String imageStr4 = "https://toppng.com/uploads/preview/kuromi-sanrio-kuromi-115631993737djkw53fsh.png";
+        String imageStr5 = "https://www.vhv.rs/dpng/d/594-5949124_cinnamoroll-sanrio-hellokitty-bunny-cute-soft-cinnamoroll-sanrio.png";
+
+        // Dummy users that posted comments
+        User user1 = new User("Dog", passwordPlaceholder, imageStr1);
+        User user2 = new User("Pikachu", passwordPlaceholder, imageStr2);
+        User user3 = new User("Egg", passwordPlaceholder, imageStr3);
+        User user4 = new User("Kuromi", passwordPlaceholder, imageStr4);
+        User user5 = new User("Cinnamoroll", passwordPlaceholder, imageStr5);
+
+        // Dummy date objects
+        Date tenMinutesAgo = new Date(System.currentTimeMillis() - 1000*60*10);
+        Date oneDayAgo = new Date(System.currentTimeMillis() - 1000*60*60*24);
+        Date twoDaysAgo = new Date(System.currentTimeMillis() - 1000*60*60*48);
+        Date now = new Date();
+
+        // ====== CREATE DUMMY COMMENTS ======
+        Comment comment1 = new Comment(user1, "Thank you for the rec!", now, 10);
+        Comment comment2 = new Comment(user2, "Wow!!", tenMinutesAgo, 5);
+        Comment comment3 = new Comment(user3, "I like this song", oneDayAgo, 1);
+        Comment comment4 = new Comment(user4, "I like your music taste!", oneDayAgo,1);
+        Comment comment5 = new Comment(user5, "Thanks for recommending!", twoDaysAgo);
+
+        // Push the comments to the DB
+        commentsDbReference.push().setValue(comment1);
+        commentsDbReference.push().setValue(comment2);
+        commentsDbReference.push().setValue(comment3);
+        commentsDbReference.push().setValue(comment4);
+        commentsDbReference.push().setValue(comment5);
+
+        // Retrieve post information from DB using postId
+        // String postId = "-Mzxvh57q8aioVtBv8VZ"; // sunroof post
+
+        postValueEventListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                postUsername.setText(snapshot.child("user").getValue(User.class).getUsername());
+                postTime.setText(p.format(snapshot.child("date").getValue(Date.class)));
+                postTitle.setText(snapshot.child("title").getValue(String.class));
+                postContent.setText(snapshot.child("content").getValue(String.class));
+                postLikes.setText(Integer.toString(snapshot.child("likeCnt").getValue(Integer.class)));
+                postReplies.setText(Integer.toString(snapshot.child("commentCnt").getValue(Integer.class)));
+                postShares.setText(Integer.toString(snapshot.child("shareCnt").getValue(Integer.class)));
+                commentSectionCnt.setText("(" + Integer.toString(snapshot.child("commentCnt").getValue(Integer.class)) + ")");
+                songTitle.setText(snapshot.child("song").child("title").getValue(String.class));
+                songArtist.setText(snapshot.child("song").child("artist").getValue(String.class));
+
+                // Load images from url
+                Glide.with(getApplicationContext()).load(snapshot.child("user").
+                        getValue(User.class).getProfileImage()).into(postUserImage);
+                Glide.with(getApplicationContext()).load(snapshot.child("song").
+                        getValue(Song.class).getImg()).into(songImage);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        };
+        postDbReference.addValueEventListener(postValueEventListener);
+    }
 
 
 }

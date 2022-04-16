@@ -56,6 +56,8 @@ public class Post {
         this.shareCnt = shareCnt;
     }
 
+    public Post() {};
+
     public User getUser() {
         return user;
     }
