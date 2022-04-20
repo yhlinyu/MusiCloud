@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".PostActivity">
+
+        <include layout="@layout/navbar"
+            android:id="@+id/navbar"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/postUserConstraintLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="10dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/navbar">
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/postUserImgCard"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                app:cardCornerRadius="40dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:strokeColor="@color/black"
+                app:strokeWidth="2dp">
+
+                <ImageView
+                    android:id="@+id/postUserImg"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:adjustViewBounds="true"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/anon" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <LinearLayout
+                android:id="@+id/postUserLinearLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginStart="16dp"
+                app:layout_constraintStart_toEndOf="@id/postUserImgCard"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <TextView
+                    android:id="@+id/postUsername"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/postUserText"
+                    style="@style/postScreenSubtitle"/>
+
+                <TextView
+                    android:id="@+id/postTimestamp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/postTime" />
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:id="@+id/followButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Follow"
+                android:textColor="@color/black"
+                app:iconTint="@color/black"
+                app:strokeColor="@color/black"
+                app:strokeWidth="1dp"
+                app:icon="@drawable/ic_baseline_add_24"
+                app:cornerRadius="20dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/songPlayerConstraintLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="20dp"
+            android:layout_marginHorizontal="30dp"
+            android:padding="16dp"
+            android:background="@drawable/player_bg"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/postUserConstraintLayout">
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/songImgCard"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                app:cardCornerRadius="10dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/songImg"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:adjustViewBounds="true"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/img_not_found" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <LinearLayout
+                android:id="@+id/songLinearLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/songImgCard"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <TextView
+                    android:id="@+id/songTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/songTitle"
+                    style="@style/postScreenTitle"/>
+
+                <TextView
+                    android:id="@+id/songArtist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/songArtist" />
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                style="@style/Widget.MaterialComponents.Button"
+                android:id="@+id/playButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:insetBottom="0dp"
+                android:insetTop="0dp"
+                app:cornerRadius="24dp"
+                app:icon="@drawable/ic_baseline_play_arrow_24"
+                app:backgroundTint="@color/black"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+            <com.google.android.material.button.MaterialButton
+                style="@style/Widget.MaterialComponents.Button"
+                android:id="@+id/pauseButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:insetBottom="0dp"
+                android:insetTop="0dp"
+                android:visibility="gone"
+                app:cornerRadius="24dp"
+                app:icon="@drawable/ic_baseline_pause_24"
+                app:backgroundTint="@color/black"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/postContentConstraintLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            app:layout_constraintTop_toBottomOf="@id/songPlayerConstraintLayout"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <TextView
+                    android:id="@+id/postTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/postTitle"
+                    style="@style/postScreenTitle"/>
+
+                <TextView
+                    android:id="@+id/postContent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:lineHeight="20dp"
+                    android:text="@string/postContent"
+                    style="@style/postScreenContent"/>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/postDetailsConstraintLayout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp">
+
+                    <TextView
+                        android:id="@+id/postLikes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableStart="@drawable/icons8_heart_24"
+                        android:drawablePadding="5dp"
+                        android:gravity="center_vertical"
+                        android:text="123"
+                        android:textSize="16dp"
+                        android:layout_marginEnd="40dp"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/postReplies"
+                        app:layout_constraintHorizontal_bias="0.5"
+                        app:layout_constraintHorizontal_chainStyle="spread_inside"
+                        app:layout_constraintStart_toStartOf="parent" />
+
+                    <TextView
+                        android:id="@+id/postReplies"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableStart="@drawable/icons8_chat_bubble_24"
+                        android:drawablePadding="5dp"
+                        android:gravity="center_vertical"
+                        android:text="456"
+                        android:textSize="16dp"
+                        android:layout_marginEnd="40dp"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/postShares"
+                        app:layout_constraintHorizontal_bias="0.5"
+                        app:layout_constraintStart_toEndOf="@+id/postLikes" />
+
+                    <TextView
+                        android:id="@+id/postShares"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableStart="@drawable/icons8_share_3_24"
+                        android:drawablePadding="5dp"
+                        android:gravity="center_vertical"
+                        android:text="123"
+                        android:textSize="16dp"
+                        android:layout_marginEnd="40dp"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.5"
+                        app:layout_constraintStart_toEndOf="@+id/postReplies" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <View
+            android:id="@+id/divider"
+            style="@style/divider"
+            android:layout_marginTop="20dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/postContentConstraintLayout"/>
+
+        <TextView
+            android:id="@+id/commentsHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="20dp"
+            android:text="@string/comments"
+            android:textSize="20dp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/divider"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/commentsCnt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="4dp"
+            android:text="@string/commentsCnt"
+            android:textSize="20dp"
+            app:layout_constraintTop_toBottomOf="@id/divider"
+            app:layout_constraintStart_toEndOf="@id/commentsHeader"/>
+
+        <RelativeLayout
+            android:id="@+id/addCommentLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginHorizontal="20dp"
+            app:layout_constraintTop_toBottomOf="@id/commentsHeader"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/commentUserImgCard"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_centerVertical="true"
+
+                app:cardCornerRadius="40dp"
+                app:strokeColor="@color/black"
+                app:strokeWidth="2dp">
+
+                <ImageView
+                    android:id="@+id/commentUserImg"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:adjustViewBounds="true"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/anon" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:id="@+id/commentsInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_toEndOf="@id/commentUserImgCard"
+                android:layout_centerVertical="true"
+                app:hintEnabled="false"
+                app:endIconDrawable="@drawable/ic_baseline_send_24"
+                app:endIconMode="custom"
+                app:boxCornerRadiusBottomEnd="20dp"
+                app:boxCornerRadiusBottomStart="20dp"
+                app:boxCornerRadiusTopEnd="20dp"
+                app:boxCornerRadiusTopStart="20dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/commentsInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="5dp"
+                    android:hint="Add a comment..."
+                    android:textSize="16dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </RelativeLayout>
+
+
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/commentsRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/addCommentLayout"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginHorizontal="20dp"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>

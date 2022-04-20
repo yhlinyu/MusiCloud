@@ -11,20 +11,21 @@ public class Comment implements Comparable<Comment> {
     protected String content;
     protected  Date date;
     protected int likeCnt;
+    protected String postId;
 
-
-    public Comment(User user, String content, Date date) {
+    public Comment(User user, String content, Date date, String postId) {
         this.user = user;
         this.content = content;
         this.date = date;
         this.likeCnt = 0;
-
+        this.postId = postId;
     }
 
-    public Comment(User user, String content, Date date, int likeCnt) {
+    public Comment(User user, String content, Date date, String postId, int likeCnt) {
         this.user = user;
         this.content = content;
         this.date = date;
+        this.postId = postId;
         this.likeCnt = likeCnt;
     }
 
@@ -62,6 +63,14 @@ public class Comment implements Comparable<Comment> {
 
     public void setLikeCnt(int likeCnt) {
         this.likeCnt = likeCnt;
+    }
+
+    public String getPostId() {
+        return postId;
+    }
+
+    public void setPostId(String postId) {
+        this.postId = postId;
     }
 
     @Override

@@ -79,8 +79,6 @@ public class LoginActivity extends AppCompatActivity {
         // Set up database
         dbReference = FirebaseDatabase.getInstance().getReference();
         usersDbReference = dbReference.child("users");
-        dbReference.child("message").setValue("Hello world"); // DELETE
-
     }
 
 
@@ -101,7 +99,7 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "User does not exist!", Toast.LENGTH_LONG).show();
                 } else {
                     User currentUser = snapshot.child(username).getValue(User.class);
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    Intent intent = new Intent(LoginActivity.this, PostActivity.class);
                     intent.putExtra("currentUser", currentUser);
                     startActivity(intent);
                 }
